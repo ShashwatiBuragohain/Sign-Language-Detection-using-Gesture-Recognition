@@ -11,6 +11,9 @@ This pipeline includes:
 - **Training**: Adam optimizer, categorical cross-entropy, early stopping  
 - **Evaluation**: Accuracy, confusion matrix, classification report  
 - **Real-Time Recognition**: webcam input with background subtraction + skin segmentation
+<p align="center">
+  <img src="https://github.com/ShashwatiBuragohain/Sign-Language-Detection-using-Gesture-Recognition/blob/4ee3d558064fa6d6c0dbe0fd7813729728057c03/ASL%20OUTPUT.png?raw=true" width="60%" />
+</p>
 
   *Snippet of the real-time processing code, showing the combination of background subtraction and HSV-based skin segmentation to isolate the hand.*
 
@@ -21,7 +24,7 @@ This pipeline includes:
 - Data Augmentation Pipeline: Improves model generalization and reduces overfitting using rotational shifts, brightness adjustments, and zooms.
 - Prevention of Overfitting: Implements Early Stopping and Dropout layers for a more reliable model.
  ## Dataset
- ASL Kaggle dataset containing 36 classes (A–Z and 0–9). Each class has ~70 images.
+ We used the [ASL dataset from Kaggle](https://www.kaggle.com/datasets/ayuraj/asl-dataset), which contains **36 classes** representing the letters **A–Z** and digits **0–9**, with approximately **70 images per class**.
 
 ## Model Pipeline 
 ### 1. Data Collection & Preprocessing
@@ -67,7 +70,7 @@ The model was trained for 20 epochs using batches of 32 images, with the augment
 The trained model is evaluated on the held-out test set, achieving a test accuracy of 95.43%. Accuracy and Loss curves are plotted over epochs to analyze training and validation trends.A Confusion Matrix and A Classification Report with Precision, Recall, and F1-Score is provided for a detailed view of per-class predictions, highlighting strengths and weaknesses across different gestures.
 and to ensure balanced evaluation of all classes.
 
-### Real-Time Gesture Detection
+### 6. Real-Time Gesture Detection
 
 Here we have used OpenCV + Webcam for real time detection.
 
@@ -78,3 +81,52 @@ Here we have used OpenCV + Webcam for real time detection.
 - Feature Enhancement (ORB): The ORB (Oriented FAST and Rotated BRIEF) algorithm detects keypoints and computes descriptors on the segmented hand image. These keypoints are drawn onto the frame, providing visual feedback and helping to highlight distinctive features of the gesture.
 - Preprocessing for Model: The ROI is then processed identically to the training data: converted to grayscale, resized to 64x64, normalized, and reshaped.
 - Prediction & Display: The processed image is fed into the trained CNN model. The model outputs a probability distribution, and the class with the highest probability is selected as the prediction. This predicted label is then overlayed directly onto the live video feed.
+
+## Challenges and Limitations
+### Environmental Challenges
+
+#### Lighting Sensitivity
+
+**Problem:**  
+The performance of the skin segmentation algorithm is highly dependent on consistent and neutral lighting.  
+Under strong yellow/warm light, the HSV range for skin can shift toward lower values, causing the algorithm to fail to detect the hand.  
+Conversely, under very cool or blue-tinted light, the skin tone can be misclassified as outside the defined range.  
+Shadows cast on the hand also create drastic changes in pixel values, which can break up the hand mask or be misinterpreted as part of the gesture.
+
+**Observed Effect:**  
+In suboptimal lighting, the system either fails to recognize a hand is present or produces a corrupted, fragmented mask.  
+This corrupted input is then passed to the CNN, which almost always results in an incorrect or low-confidence prediction.
+
+---
+
+#### Background Complexity
+
+**Problem:**  
+While background subtraction helps isolate moving objects, it is not foolproof. The current implementation struggles with:
+
+- **Cluttered Backgrounds:** Busy backgrounds with many edges and colors (e.g., a bookshelf, another person moving) can introduce noise that is not fully subtracted away, contaminating the Region of Interest (ROI).
+- **Skin-Colored Objects:** If an object in the background (e.g., a wooden table, a poster) has a color similar to the predefined skin tone range, it may be incorrectly included in the mask. This "false positive" segmentation adds significant noise to the input image.
+
+**Observed Effect:**  
+Noisy inputs from complex backgrounds confuse the CNN, which was trained on clean, centered images of hands.  
+This leads to a sharp drop in prediction accuracy.
+
+---
+
+#### Camera Quality and Auto-Adjustments
+
+**Problem:**  
+Consumer-grade webcams often have auto-adjustment features for white balance, exposure, and focus.  
+These automated corrections can change the image properties from frame to frame without user input.  
+For instance, if the hand moves into the frame, the camera might automatically adjust its exposure, altering the apparent skin color and violating the assumptions of our static HSV range.
+
+**Observed Effect:**  
+This creates an inconsistent input stream for the model, where the same hand under the same conditions can look different from one moment to the next, leading to unpredictable performance.
+
+---
+
+##  Impact on the Pipeline
+
+These environmental factors primarily degrade the quality of the input before it even reaches the CNN model.  
+The model itself is powerful and accurate, but its performance is entirely dependent on receiving clean, well-segmented input that resembles the training data.
+
