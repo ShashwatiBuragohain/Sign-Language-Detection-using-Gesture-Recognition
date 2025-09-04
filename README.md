@@ -130,3 +130,8 @@ This creates an inconsistent input stream for the model, where the same hand und
 These environmental factors primarily degrade the quality of the input before it even reaches the CNN model.  
 The model itself is powerful and accurate, but its performance is entirely dependent on receiving clean, well-segmented input that resembles the training data.
 
+## Acknowledgment
+
+This project was completed as part of the Machine Learning lab (EE 524) course at Indian Institute of Technology Guwahati (IITG).
+
+
